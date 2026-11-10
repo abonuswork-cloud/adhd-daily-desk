@@ -86,7 +86,7 @@ function Desk() {
     const res = await ask({ data: { mode, categories: cats, prompt: prompt.trim() || undefined, notebook: notes, currentTasks: all.filter((t) => !t.done).map((t) => t.text).slice(0, 30) } });
     setBusy(null);
     if (!res.ok) return toast.error(res.error);
-    const j = res.json as Record<string, any>;
+    const j = JSON.parse(res.json) as Record<string, any>;
     if (mode === "plan") {
       const blocks: Block[] = (j.blocks ?? []).map((b: any) => ({ id: uid(), label: String(b.label), minutes: Number(b.minutes) || 30, category: String(b.category ?? ""), tasks: (b.tasks ?? []).map((t: string) => ({ id: uid(), text: String(t), done: false })) }));
       setPlan({ date: today(), note: String(j.note ?? ""), blocks });

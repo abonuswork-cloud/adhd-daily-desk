@@ -36,7 +36,8 @@ Return JSON only in this shape: ${shapes[data.mode]}`;
         const content = (item as { content?: { type: string; text?: string }[] }).content ?? [];
         for (const c of content) if (c.type === "output_text" && c.text) text += c.text;
       }
-      return { ok: true as const, json: JSON.parse(text) as Record<string, unknown> };
+      JSON.parse(text);
+      return { ok: true as const, json: text };
     } catch (e) {
       console.error(e);
       const msg = e instanceof GatewayError && e.httpStatus === 429 ? "Busy right now — try again in a minute." : e instanceof GatewayError && e.httpStatus === 402 ? "AI credits ran out." : "Couldn't generate that. Try again.";
