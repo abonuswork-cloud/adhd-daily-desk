@@ -1,23 +1,267 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { Check, Loader2, LifeBuoy, Sparkles, Plus, Trash2, BookOpen, Wand2, Clock } from "lucide-react";
+import { askDesk } from "@/lib/desk.functions";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
-// The home route ships no og:image, so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "AB ADHD Daily Desk — today's checklist" },
+      { name: "description", content: "Angelica's morning home page: a 4-hour time-blocked task list, suggested micro-topics and an I'm stuck button." },
+      { property: "og:title", content: "AB ADHD Daily Desk" },
+      { property: "og:description", content: "Time-blocked daily checklists and suggested micro-topics by category." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: Desk,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+type Task = { id: string; text: string; done: boolean };
+type Block = { id: string; label: string; minutes: number; category: string; tasks: Task[] };
+type Topic = { category: string; title: string; why: string; checklist: string[] };
+
+const CATS = [
+  { name: "Job Search", color: "cat-1" },
+  { name: "Starting a Company", color: "cat-2" },
+  { name: "Breaking into Sports Tech", color: "cat-3" },
+  { name: "Technology", color: "cat-6" },
+  { name: "Learning Claude", color: "cat-4" },
+  { name: "Life Admin", color: "cat-5" },
+] as const;
+const colorOf = (c: string) => CATS.find((x) => x.name === c)?.color ?? "muted-foreground";
+const bg: Record<string, string> = { "cat-1": "bg-cat-1", "cat-2": "bg-cat-2", "cat-3": "bg-cat-3", "cat-4": "bg-cat-4", "cat-5": "bg-cat-5", "cat-6": "bg-cat-6", "muted-foreground": "bg-muted-foreground" };
+const border: Record<string, string> = { "cat-1": "border-cat-1", "cat-2": "border-cat-2", "cat-3": "border-cat-3", "cat-4": "border-cat-4", "cat-5": "border-cat-5", "cat-6": "border-cat-6", "muted-foreground": "border-border" };
+
+const STARTER: Topic[] = [
+  { category: "Job Search", title: "Polish one resume bullet", why: "Small wins compound.", checklist: ["Pick your weakest bullet", "Add a number or result", "Read it out loud"] },
+  { category: "Starting a Company", title: "Write a one-line problem statement", why: "Clarity before building.", checklist: ["Who has the problem?", "What does it cost them?", "Write it in 20 words"] },
+  { category: "Breaking into Sports Tech", title: "Map 5 sports tech companies", why: "Know the landscape.", checklist: ["List 5 companies", "Note what each one sells", "Star the one you'd love to work at"] },
+  { category: "Technology", title: "Learn one new term", why: "Build vocabulary daily.", checklist: ["Pick a term (e.g. RAG)", "Read one explainer", "Write a 1-sentence definition"] },
+  { category: "Learning Claude", title: "Try a role prompt", why: "Prompting is a skill.", checklist: ["Give Claude a role", "Ask it to critique your idea", "Save the best prompt"] },
+  { category: "Life Admin", title: "Clear 5 emails", why: "Lighter inbox, lighter brain.", checklist: ["Open inbox", "Reply or archive 5", "Celebrate"] },
+];
+
+const uid = () => Math.random().toString(36).slice(2, 10);
+const today = () => new Date().toISOString().slice(0, 10);
+
+function useStored<T>(key: string, init: T) {
+  const [v, setV] = useState<T>(init);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    try { const raw = localStorage.getItem(key); if (raw) setV(JSON.parse(raw)); } catch { /* ignore */ }
+    setReady(true);
+  }, [key]);
+  useEffect(() => { if (ready) localStorage.setItem(key, JSON.stringify(v)); }, [key, v, ready]);
+  return [v, setV] as const;
+}
+
+function Desk() {
+  const ask = useServerFn(askDesk);
+  const [cats, setCats] = useStored<string[]>("abd.cats", ["Job Search", "Learning Claude"]);
+  const [notebook, setNotebook] = useStored<{ id: string; text: string; date: string }[]>("abd.notebook", []);
+  const [plan, setPlan] = useStored<{ date: string; note: string; blocks: Block[] }>("abd.plan", { date: "", note: "", blocks: [] });
+  const [topics, setTopics] = useStored<Topic[]>("abd.topics", STARTER);
+  const [prompt, setPrompt] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
+  const [newTask, setNewTask] = useState("");
+
+  const all = plan.blocks.flatMap((b) => b.tasks);
+  const done = all.filter((t) => t.done).length;
+  const pct = all.length ? Math.round((done / all.length) * 100) : 0;
+  const stale = plan.date && plan.date !== today();
+  const notes = useMemo(() => notebook.slice(-30).map((n) => n.text), [notebook]);
+
+  const remember = (text: string) => setNotebook((n) => [...n, { id: uid(), text, date: today() }].slice(-100));
+
+  async function run(mode: "plan" | "suggest" | "stuck") {
+    setBusy(mode);
+    if (prompt.trim() && mode !== "stuck") remember(prompt.trim());
+    const res = await ask({ data: { mode, categories: cats, prompt: prompt.trim() || undefined, notebook: notes, currentTasks: all.filter((t) => !t.done).map((t) => t.text).slice(0, 30) } });
+    setBusy(null);
+    if (!res.ok) { toast.error(res.error); return; }
+    const j = JSON.parse(res.json) as { blocks?: any[]; note?: string; topics?: any[]; tasks?: string[]; nudge?: string };
+    if (mode === "plan") {
+      const blocks: Block[] = (j.blocks ?? []).map((b: any) => ({ id: uid(), label: String(b.label), minutes: Number(b.minutes) || 30, category: String(b.category ?? ""), tasks: (b.tasks ?? []).map((t: string) => ({ id: uid(), text: String(t), done: false })) }));
+      setPlan({ date: today(), note: String(j.note ?? ""), blocks });
+      setPrompt("");
+      toast.success("Your 4-hour plan is ready ✨");
+    } else if (mode === "suggest") {
+      setTopics((j.topics ?? []).map((t: any) => ({ category: String(t.category), title: String(t.title), why: String(t.why ?? ""), checklist: (t.checklist ?? []).map(String) })));
+      setPrompt("");
+    } else {
+      const tasks = (j.tasks ?? []).map((t: string) => ({ id: uid(), text: String(t), done: false }));
+      setPlan((p) => ({ ...p, date: p.date || today(), blocks: [{ id: uid(), label: "Right now · Tiny start", minutes: 10, category: "Unstuck", tasks }, ...p.blocks] }));
+      toast(String(j.nudge ?? "You've got this."), { icon: "💛" });
+    }
+  }
+
+  function toggle(bid: string, tid: string) {
+    setPlan((p) => ({ ...p, blocks: p.blocks.map((b) => b.id !== bid ? b : { ...b, tasks: b.tasks.map((t) => {
+      if (t.id !== tid) return t;
+      if (!t.done) toast.success(["Nice! 🎉", "Done & dusted ✅", "Look at you go 🚀", "Another one 💥"][Math.floor(Math.random() * 4)]);
+      return { ...t, done: !t.done };
+    }) }) }));
+  }
+
+  function addTopic(t: Topic) {
+    remember(`Interested in: ${t.title} (${t.category})`);
+    setPlan((p) => ({ ...p, date: p.date || today(), blocks: [...p.blocks, { id: uid(), label: t.title, minutes: 20, category: t.category, tasks: t.checklist.map((x) => ({ id: uid(), text: x, done: false })) }] }));
+    toast.success("Added to today");
+  }
+
+  function addOwn() {
+    if (!newTask.trim()) return;
+    setPlan((p) => {
+      const blocks = p.blocks.length ? p.blocks : [{ id: uid(), label: "My tasks", minutes: 30, category: "", tasks: [] }];
+      return { ...p, date: p.date || today(), blocks: blocks.map((b, i) => i === blocks.length - 1 ? { ...b, tasks: [...b.tasks, { id: uid(), text: newTask.trim(), done: false }] } : b) };
+    });
+    setNewTask("");
+  }
+
+  const grouped = CATS.map((c) => ({ ...c, items: topics.filter((t) => t.category === c.name) })).filter((g) => g.items.length);
+  const other = topics.filter((t) => !CATS.some((c) => c.name === t.category));
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="min-h-screen bg-background font-sans text-foreground">
+      <header className="mx-auto flex max-w-6xl flex-wrap items-end justify-between gap-4 px-6 pt-10">
+        <div>
+          <p className="text-sm font-medium text-muted-foreground">{new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</p>
+          <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">AB ADHD <span className="text-primary">Daily Desk</span></h1>
+        </div>
+        <div className="flex items-center gap-4 rounded-2xl border bg-card px-5 py-3">
+          <div className="relative h-14 w-14">
+            <svg viewBox="0 0 36 36" className="h-14 w-14 -rotate-90"><circle cx="18" cy="18" r="15" fill="none" stroke="var(--muted)" strokeWidth="4" /><circle cx="18" cy="18" r="15" fill="none" stroke="var(--primary)" strokeWidth="4" strokeLinecap="round" strokeDasharray={`${pct * 0.942} 100`} className="transition-all duration-500" /></svg>
+            <span className="absolute inset-0 grid place-items-center text-xs font-bold">{pct}%</span>
+          </div>
+          <div><p className="font-display text-2xl font-bold">{done}/{all.length}</p><p className="text-xs text-muted-foreground">done today</p></div>
+        </div>
+      </header>
+
+      <main className="mx-auto grid max-w-6xl gap-6 px-6 py-8 lg:grid-cols-[1fr_380px]">
+        <div className="space-y-6">
+          {/* Categories */}
+          <section className="rounded-3xl border bg-card p-5">
+            <h2 className="mb-3 font-display text-lg font-bold">Today I want to focus on…</h2>
+            <div className="flex flex-wrap gap-2">
+              {CATS.map((c) => {
+                const on = cats.includes(c.name);
+                return (
+                  <button key={c.name} onClick={() => setCats((s) => on ? s.filter((x) => x !== c.name) : [...s, c.name])}
+                    className={cn("flex items-center gap-2 rounded-full border-2 px-4 py-2 text-sm font-semibold transition", on ? cn(bg[c.color], border[c.color], "text-foreground") : "border-border bg-background text-muted-foreground hover:text-foreground")}>
+                    {on ? <Check className="h-4 w-4" /> : <span className={cn("h-2.5 w-2.5 rounded-full", bg[c.color])} />}{c.name}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Prompt */}
+          <section className="rounded-3xl border bg-card p-5">
+            <h2 className="mb-1 flex items-center gap-2 font-display text-lg font-bold"><Wand2 className="h-5 w-5 text-primary" />What's on your mind?</h2>
+            <p className="mb-3 text-sm text-muted-foreground">Everything you type is saved to your notebook so suggestions get more "you" over time.</p>
+            <Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="e.g. I have a call with a sports analytics startup Thursday, and I want to finish my Claude course…" className="min-h-24 rounded-2xl" />
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button onClick={() => run("plan")} disabled={!!busy} className="rounded-full">{busy === "plan" ? <Loader2 className="animate-spin" /> : <Clock />}Generate my 4-hour plan</Button>
+              <Button onClick={() => run("suggest")} disabled={!!busy} variant="secondary" className="rounded-full">{busy === "suggest" ? <Loader2 className="animate-spin" /> : <Sparkles />}Suggest micro-topics</Button>
+            </div>
+          </section>
+
+          {/* Plan */}
+          <section className="rounded-3xl border bg-card p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-display text-lg font-bold">Today's desk list</h2>
+              {plan.blocks.length > 0 && <button onClick={() => setPlan({ date: "", note: "", blocks: [] })} className="text-xs text-muted-foreground hover:text-destructive">Clear</button>}
+            </div>
+            {stale && <p className="mb-3 rounded-xl bg-accent px-3 py-2 text-sm">This list is from {plan.date}. Generate a fresh plan for today?</p>}
+            {plan.note && <p className="mb-4 text-sm italic text-muted-foreground">{plan.note}</p>}
+            {plan.blocks.length === 0 ? (
+              <p className="rounded-2xl border-2 border-dashed p-8 text-center text-sm text-muted-foreground">Pick your focus, then hit <b>Generate my 4-hour plan</b>.</p>
+            ) : (
+              <div className="space-y-4">
+                {plan.blocks.map((b) => {
+                  const c = colorOf(b.category);
+                  const bd = b.tasks.length && b.tasks.every((t) => t.done);
+                  return (
+                    <div key={b.id} className={cn("rounded-2xl border-l-8 bg-background p-4", border[c], bd && "opacity-60")}>
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <p className="font-display font-bold">{b.label}</p>
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold">{b.minutes} min</span>
+                          <button aria-label="Remove block" onClick={() => setPlan((p) => ({ ...p, blocks: p.blocks.filter((x) => x.id !== b.id) }))} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
+                        </div>
+                      </div>
+                      <ul className="space-y-1.5">
+                        {b.tasks.map((t) => (
+                          <li key={t.id}>
+                            <button onClick={() => toggle(b.id, t.id)} className="group flex w-full items-start gap-3 rounded-lg p-1 text-left hover:bg-muted">
+                              <span className={cn("mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 transition", t.done ? cn(bg[c], border[c], "scale-110") : "border-border")}>{t.done && <Check className="h-3.5 w-3.5" strokeWidth={3} />}</span>
+                              <span className={cn("text-sm", t.done && "text-muted-foreground line-through")}>{t.text}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <div className="mt-4 flex gap-2">
+              <Input value={newTask} onChange={(e) => setNewTask(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addOwn()} placeholder="Add your own task…" className="rounded-full" />
+              <Button onClick={addOwn} size="icon" variant="secondary" className="shrink-0 rounded-full" aria-label="Add task"><Plus /></Button>
+            </div>
+          </section>
+        </div>
+
+        <aside className="space-y-6">
+          <button onClick={() => run("stuck")} disabled={!!busy} className="flex w-full items-center justify-center gap-3 rounded-3xl bg-accent px-6 py-6 font-display text-2xl font-extrabold text-accent-foreground shadow-sm transition hover:-rotate-1 hover:scale-[1.02] disabled:opacity-60">
+            {busy === "stuck" ? <Loader2 className="h-7 w-7 animate-spin" /> : <LifeBuoy className="h-7 w-7" />} I'm stuck
+          </button>
+
+          <section className="rounded-3xl border bg-card p-5">
+            <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-bold"><Sparkles className="h-5 w-5 text-primary" />Suggested micro-topics</h2>
+            <div className="space-y-5">
+              {[...grouped, ...(other.length ? [{ name: "Other", color: "muted-foreground", items: other }] : [])].map((g) => (
+                <div key={g.name}>
+                  <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground"><span className={cn("h-2.5 w-2.5 rounded-full", bg[g.color])} />{g.name}</p>
+                  <div className="space-y-2">
+                    {g.items.map((t, i) => (
+                      <div key={i} className="rounded-2xl border bg-background p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div><p className="text-sm font-semibold">{t.title}</p><p className="text-xs text-muted-foreground">{t.why}</p></div>
+                          <Button size="sm" variant="outline" className="h-7 shrink-0 rounded-full px-2 text-xs" onClick={() => addTopic(t)}><Plus className="h-3 w-3" />Today</Button>
+                        </div>
+                        <ul className="mt-2 list-inside list-disc text-xs text-muted-foreground">{t.checklist.map((x, j) => <li key={j}>{x}</li>)}</ul>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-3xl border bg-card p-5">
+            <h2 className="mb-1 flex items-center gap-2 font-display text-lg font-bold"><BookOpen className="h-5 w-5 text-primary" />My notebook</h2>
+            <p className="mb-3 text-xs text-muted-foreground">What the desk has learned about you. Remove anything that's no longer true.</p>
+            {notebook.length === 0 ? <p className="text-sm text-muted-foreground">Empty for now — type a prompt to start.</p> : (
+              <ul className="max-h-72 space-y-1.5 overflow-auto">
+                {[...notebook].reverse().map((n) => (
+                  <li key={n.id} className="group flex items-start justify-between gap-2 rounded-lg bg-muted px-3 py-2 text-xs">
+                    <span>{n.text}</span>
+                    <button aria-label="Forget" onClick={() => setNotebook((s) => s.filter((x) => x.id !== n.id))} className="text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </aside>
+      </main>
     </div>
   );
 }
