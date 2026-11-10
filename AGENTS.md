@@ -28,3 +28,5 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+- Desk data (plan, notebook, topics, categories) lives in browser localStorage; AI calls go through src/lib/desk.functions.ts server function — single-user home page, no accounts needed.
