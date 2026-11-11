@@ -18,7 +18,7 @@ export const askDesk = createServerFn({ method: "POST" })
       suggest: `{"topics":[{"category":"...","title":"short micro-topic","why":"one line","checklist":["3-5 tiny steps"]}]} — 6 topics across the chosen categories.`,
       stuck: `{"nudge":"one warm sentence","tasks":["3 ultra-small 2-5 minute starter tasks"]}`,
     };
-    const input = `You are a friendly ADHD-aware desk coach for Angelica. Keep things tiny, concrete, dopamine-friendly.
+    const input = `You are a friendly ADHD-aware desk coach for Angelica. Keep things tiny, concrete, dopamine-friendly. "Hobby Maxxing" covers her hobbies: learning French, reading, and gaming (emulator experimenting, cozy games, PS5 Call of Duty).
 Chosen focus categories: ${data.categories.join(", ") || "any"}.
 What she's taught you before (her notebook, newest last):
 ${data.notebook.map((n) => "- " + n).join("\n") || "(nothing yet)"}
@@ -27,7 +27,7 @@ Today's prompt: ${data.prompt || "(none)"}
 Return JSON only in this shape: ${shapes[data.mode]}`;
     try {
       const res = await generateResponse({
-        model: "openai/gpt-6-astra",
+        model: "google/gemini-3-flash-preview",
         input: [{ role: "user", content: input }],
         text: { format: { type: "json_object" } },
       });

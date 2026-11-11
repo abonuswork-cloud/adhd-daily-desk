@@ -38,6 +38,7 @@
   --color-cat-4: var(--cat-4);
   --color-cat-5: var(--cat-5);
   --color-cat-6: var(--cat-6);
+  --color-cat-7: var(--cat-7);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -107,6 +108,7 @@
   --cat-4: oklch(0.6 0.2 295);
   --cat-5: oklch(0.72 0.18 145);
   --cat-6: oklch(0.65 0.18 250);
+  --cat-7: oklch(0.72 0.19 340);
 }
 
 .dark {

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Check, Loader2, LifeBuoy, Sparkles, Plus, Trash2, BookOpen, Wand2, Clock } from "lucide-react";
+import { Check, Loader2, LifeBuoy, Sparkles, Plus, Trash2, BookOpen, Wand2, Clock, History } from "lucide-react";
 import { askDesk } from "@/lib/desk.functions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,10 +34,11 @@ const CATS = [
   { name: "Technology", color: "cat-6" },
   { name: "Learning Claude", color: "cat-4" },
   { name: "Life Admin", color: "cat-5" },
+  { name: "Hobby Maxxing", color: "cat-7" },
 ] as const;
 const colorOf = (c: string) => CATS.find((x) => x.name === c)?.color ?? "muted-foreground";
-const bg: Record<string, string> = { "cat-1": "bg-cat-1", "cat-2": "bg-cat-2", "cat-3": "bg-cat-3", "cat-4": "bg-cat-4", "cat-5": "bg-cat-5", "cat-6": "bg-cat-6", "muted-foreground": "bg-muted-foreground" };
-const border: Record<string, string> = { "cat-1": "border-cat-1", "cat-2": "border-cat-2", "cat-3": "border-cat-3", "cat-4": "border-cat-4", "cat-5": "border-cat-5", "cat-6": "border-cat-6", "muted-foreground": "border-border" };
+const bg: Record<string, string> = { "cat-1": "bg-cat-1", "cat-2": "bg-cat-2", "cat-3": "bg-cat-3", "cat-4": "bg-cat-4", "cat-5": "bg-cat-5", "cat-6": "bg-cat-6", "cat-7": "bg-cat-7", "muted-foreground": "bg-muted-foreground" };
+const border: Record<string, string> = { "cat-1": "border-cat-1", "cat-2": "border-cat-2", "cat-3": "border-cat-3", "cat-4": "border-cat-4", "cat-5": "border-cat-5", "cat-6": "border-cat-6", "cat-7": "border-cat-7", "muted-foreground": "border-border" };
 
 const STARTER: Topic[] = [
   { category: "Job Search", title: "Polish one resume bullet", why: "Small wins compound.", checklist: ["Pick your weakest bullet", "Add a number or result", "Read it out loud"] },
@@ -46,7 +47,10 @@ const STARTER: Topic[] = [
   { category: "Technology", title: "Learn one new term", why: "Build vocabulary daily.", checklist: ["Pick a term (e.g. RAG)", "Read one explainer", "Write a 1-sentence definition"] },
   { category: "Learning Claude", title: "Try a role prompt", why: "Prompting is a skill.", checklist: ["Give Claude a role", "Ask it to critique your idea", "Save the best prompt"] },
   { category: "Life Admin", title: "Clear 5 emails", why: "Lighter inbox, lighter brain.", checklist: ["Open inbox", "Reply or archive 5", "Celebrate"] },
+  { category: "Hobby Maxxing", title: "10 minutes of French", why: "Hobbies recharge focus.", checklist: ["Open your French app or podcast", "Learn 5 new words", "Say one sentence out loud"] },
 ];
+type LogEntry = { id: string; savedAt: string; date: string; note: string; blocks: Block[] };
+const WEEK = 7 * 24 * 60 * 60 * 1000;
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const today = () => new Date().toISOString().slice(0, 10);
@@ -68,7 +72,15 @@ function Desk() {
   const [notebook, setNotebook] = useStored<{ id: string; text: string; date: string }[]>("abd.notebook", []);
   const [plan, setPlan] = useStored<{ date: string; note: string; blocks: Block[] }>("abd.plan", { date: "", note: "", blocks: [] });
   const [topics, setTopics] = useStored<Topic[]>("abd.topics", STARTER);
+  const [log, setLog] = useStored<LogEntry[]>("abd.log", []);
+  const [openLog, setOpenLog] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
+  useEffect(() => { setLog((l) => { const k = l.filter((e) => Date.now() - new Date(e.savedAt).getTime() < WEEK); return k.length === l.length ? l : k; }); }, [log.length, setLog]);
+  const saveToLog = (p: typeof plan, quiet = false) => {
+    if (!p.blocks.length) return;
+    setLog((l) => [{ id: uid(), savedAt: new Date().toISOString(), date: p.date || today(), note: p.note, blocks: p.blocks }, ...l]);
+    if (!quiet) toast.success("Saved to your log 📒");
+  };
   const [busy, setBusy] = useState<string | null>(null);
   const [newTask, setNewTask] = useState("");
 
@@ -89,6 +101,7 @@ function Desk() {
     const j = JSON.parse(res.json) as { blocks?: any[]; note?: string; topics?: any[]; tasks?: string[]; nudge?: string };
     if (mode === "plan") {
       const blocks: Block[] = (j.blocks ?? []).map((b: any) => ({ id: uid(), label: String(b.label), minutes: Number(b.minutes) || 30, category: String(b.category ?? ""), tasks: (b.tasks ?? []).map((t: string) => ({ id: uid(), text: String(t), done: false })) }));
+      saveToLog(plan, true);
       setPlan({ date: today(), note: String(j.note ?? ""), blocks });
       setPrompt("");
       toast.success("Your 4-hour plan is ready ✨");
@@ -177,7 +190,7 @@ function Desk() {
           <section className="rounded-3xl border bg-card p-5">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-display text-lg font-bold">Today's desk list</h2>
-              {plan.blocks.length > 0 && <button onClick={() => setPlan({ date: "", note: "", blocks: [] })} className="text-xs text-muted-foreground hover:text-destructive">Clear</button>}
+              {plan.blocks.length > 0 && <div className="flex gap-3"><button onClick={() => saveToLog(plan)} className="text-xs font-semibold text-primary hover:underline">Save to log</button><button onClick={() => { saveToLog(plan, true); setPlan({ date: "", note: "", blocks: [] }); }} className="text-xs text-muted-foreground hover:text-destructive">Clear</button></div>}
             </div>
             {stale && <p className="mb-3 rounded-xl bg-accent px-3 py-2 text-sm">This list is from {plan.date}. Generate a fresh plan for today?</p>}
             {plan.note && <p className="mb-4 text-sm italic text-muted-foreground">{plan.note}</p>}
@@ -244,6 +257,32 @@ function Desk() {
                 </div>
               ))}
             </div>
+          </section>
+
+          <section className="rounded-3xl border bg-card p-5">
+            <h2 className="mb-1 flex items-center gap-2 font-display text-lg font-bold"><History className="h-5 w-5 text-primary" />Log</h2>
+            <p className="mb-3 text-xs text-muted-foreground">Past desk lists, kept for 7 days. Old lists save here automatically when you make a new plan.</p>
+            {log.length === 0 ? <p className="text-sm text-muted-foreground">No saved lists yet.</p> : (
+              <ul className="max-h-96 space-y-2 overflow-auto">
+                {log.map((e) => {
+                  const ts = e.blocks.flatMap((b) => b.tasks);
+                  return (
+                    <li key={e.id} className="rounded-2xl border bg-background p-3 text-xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <button onClick={() => setOpenLog(openLog === e.id ? null : e.id)} className="text-left font-semibold hover:text-primary">{new Date(e.savedAt).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · {ts.filter((t) => t.done).length}/{ts.length} done</button>
+                        <div className="flex gap-2">
+                          <button onClick={() => { saveToLog(plan, true); setPlan({ date: today(), note: e.note, blocks: e.blocks }); setLog((l) => l.filter((x) => x.id !== e.id)); toast.success("Restored to today"); }} className="font-semibold text-primary hover:underline">Restore</button>
+                          <button aria-label="Delete log entry" onClick={() => setLog((l) => l.filter((x) => x.id !== e.id))} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
+                        </div>
+                      </div>
+                      {openLog === e.id && e.blocks.map((b) => (
+                        <div key={b.id} className="mt-2"><p className="font-semibold">{b.label}</p><ul className="ml-1">{b.tasks.map((t) => <li key={t.id} className={cn(t.done && "text-muted-foreground line-through")}>{t.done ? "✓" : "○"} {t.text}</li>)}</ul></div>
+                      ))}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </section>
 
           <section className="rounded-3xl border bg-card p-5">
