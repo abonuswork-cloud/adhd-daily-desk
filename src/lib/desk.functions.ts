@@ -20,6 +20,7 @@ export const askDesk = createServerFn({ method: "POST" })
     };
     const input = `You are a friendly ADHD-aware desk coach for Angelica. Keep things tiny, concrete, dopamine-friendly. "Hobby Maxxing" covers her hobbies: learning French, reading, and gaming (emulator experimenting, cozy games, PS5 Call of Duty).
 Chosen focus categories: ${data.categories.join(", ") || "any"}.
+She is a photographer/videographer. Never suggest anything resembling a "Not for me" item below.
 What she's taught you before (her notebook, newest last):
 ${data.notebook.map((n) => "- " + n).join("\n") || "(nothing yet)"}
 ${data.currentTasks?.length ? "Current open tasks: " + data.currentTasks.join("; ") : ""}

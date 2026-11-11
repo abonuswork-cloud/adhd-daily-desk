@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Check, Loader2, LifeBuoy, Sparkles, Plus, Trash2, BookOpen, Wand2, Clock, History, ChevronDown } from "lucide-react";
+import { Check, Loader2, LifeBuoy, Sparkles, Plus, Trash2, BookOpen, Wand2, Clock, History, ChevronDown, X } from "lucide-react";
 import { askDesk } from "@/lib/desk.functions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -49,7 +49,8 @@ const STARTER: Topic[] = [
   { category: "Learning Claude", title: "Try a role prompt", why: "Prompting is a skill.", checklist: ["Give Claude a role", "Ask it to critique your idea", "Save the best prompt"] },
   { category: "Health & Movement", title: "5-minute stretch reset", why: "Unlock your back and brain between blocks.", checklist: ["Stand up", "Neck + shoulder rolls", "Touch your toes"] },
   { category: "Health & Movement", title: "Water + walk loop", why: "Hydration and a short walk restart focus.", checklist: ["Fill your water bottle", "Walk 10 minutes", "Drink half before sitting"] },
-  { category: "Creative Projects", title: "15-minute sketch or doodle", why: "Low-stakes making feels great.", checklist: ["Grab paper", "Set a 15-min timer", "Snap a photo of it"] },
+  { category: "Creative Projects", title: "Photo walk: 10 shots", why: "Train your eye in 20 minutes.", checklist: ["Pick a theme or color", "Shoot 10 frames", "Pick your best one"] },
+  { category: "Creative Projects", title: "Edit one short clip", why: "Small edits build a reel.", checklist: ["Pick 3 clips", "Cut to 15–30 sec", "Export and save"] },
   { category: "Creative Projects", title: "Write 3 content ideas", why: "Feed your future posts.", checklist: ["Open notes", "Jot 3 post ideas", "Star your favorite"] },
 ];
 const HOBBY: Topic[] = [
@@ -149,6 +150,7 @@ function Desk() {
   const [topics, setTopics] = useStored<Topic[]>("abd.topics", STARTER);
   useEffect(() => { setTopics((t) => t.some((x) => x.category === "Hobby Maxxing") ? t : [...t, ...HOBBY]); }, [topics.length, setTopics]);
   useEffect(() => { if (cats.includes("Breaking into Sports Tech")) setCats((c) => c.map((x) => x === "Breaking into Sports Tech" ? "Sports Tech" : x)); }, [cats, setCats]);
+  useEffect(() => { if (topics.some((t) => t.title === "15-minute sketch or doodle")) setTopics((t) => [...t.filter((x) => x.title !== "15-minute sketch or doodle"), ...STARTER.filter((x) => x.title === "Photo walk: 10 shots" || x.title === "Edit one short clip")]); }, [topics, setTopics]);
   useEffect(() => { if (cats.includes("Life Admin")) setCats((c) => c.filter((x) => x !== "Life Admin")); }, [cats, setCats]);
   useEffect(() => { if (topics.some((t) => t.category === "Life Admin")) setTopics((t) => [...t.filter((x) => x.category !== "Life Admin"), ...STARTER.filter((x) => x.category === "Health & Movement" || x.category === "Creative Projects")]); }, [topics, setTopics]);
   useEffect(() => { if (topics.some((t) => t.category === "Breaking into Sports Tech")) setTopics((t) => t.map((x) => x.category === "Breaking into Sports Tech" ? { ...x, category: "Sports Tech" } : x)); }, [topics, setTopics]);
@@ -202,6 +204,12 @@ function Desk() {
       if (!t.done) toast.success(["Nice! 🎉", "Done & dusted ✅", "Look at you go 🚀", "Another one 💥"][Math.floor(Math.random() * 4)]);
       return { ...t, done: !t.done };
     }) }) }));
+  }
+
+  function notForMe(t: Topic) {
+    remember(`Not for me: ${t.title} (${t.category}) — avoid suggestions like this`);
+    setTopics((all) => all.filter((x) => !(x.title === t.title && x.category === t.category)));
+    toast("Got it — noted in your notebook");
   }
 
   function addTopic(t: Topic) {
@@ -362,7 +370,7 @@ function Desk() {
                       <div key={i} className="rounded-2xl border bg-background p-3">
                         <div className="flex items-start justify-between gap-2">
                           <div><p className="text-sm font-semibold">{t.title}</p><p className="text-xs text-muted-foreground">{t.why}</p></div>
-                          <Button size="sm" variant="outline" className="h-7 shrink-0 rounded-full px-2 text-xs" onClick={() => addTopic(t)}><Plus className="h-3 w-3" />Today</Button>
+                          <div className="flex shrink-0 flex-col items-end gap-1"><Button size="sm" variant="outline" className="h-7 rounded-full px-2 text-xs" onClick={() => addTopic(t)}><Plus className="h-3 w-3" />Today</Button><button onClick={() => notForMe(t)} className="flex items-center gap-0.5 text-[11px] text-muted-foreground hover:text-destructive"><X className="h-3 w-3" />Not for me</button></div>
                         </div>
                         <ul className="mt-2 list-inside list-disc text-xs text-muted-foreground">{t.checklist.map((x, j) => <li key={j}>{x}</li>)}</ul>
                       </div>
