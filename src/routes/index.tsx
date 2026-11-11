@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Check, Loader2, LifeBuoy, Sparkles, Plus, Trash2, BookOpen, Wand2, Clock, History, ChevronDown, X } from "lucide-react";
+import { Check, Loader2, LifeBuoy, Sparkles, Plus, Trash2, BookOpen, Wand2, Clock, History, ChevronDown, X, Mic, MicOff } from "lucide-react";
 import { askDesk } from "@/lib/desk.functions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -127,6 +127,23 @@ function Affirmation() {
       <p className="mt-2 text-[10px] text-muted-foreground">A new one every day.</p>
     </section>
   );
+}
+
+function MicButton({ onText }: { onText: (t: string) => void }) {
+  const [on, setOn] = useState(false);
+  const [ok, setOk] = useState(false);
+  const rec = useRef<any>(null);
+  useEffect(() => { setOk(!!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)); }, []);
+  if (!ok) return null;
+  function toggle() {
+    if (on) { rec.current?.stop(); return; }
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const r = new SR(); r.lang = "en-US"; r.continuous = true; r.interimResults = false;
+    r.onresult = (e: any) => { for (let i = e.resultIndex; i < e.results.length; i++) if (e.results[i].isFinal) onText(e.results[i][0].transcript.trim()); };
+    r.onend = () => setOn(false); r.onerror = () => setOn(false);
+    rec.current = r; r.start(); setOn(true);
+  }
+  return <button type="button" onClick={toggle} aria-label={on ? "Stop dictation" : "Speak"} className={cn("absolute bottom-2 right-2 grid h-9 w-9 place-items-center rounded-full border-2 border-foreground bg-card transition", on && "animate-pulse bg-accent")}>{on ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}</button>;
 }
 
 function DeskClock() {
@@ -286,7 +303,7 @@ function Desk() {
           <section className="paper">
             <h2 className="mb-1 flex items-center gap-2 font-display text-lg font-bold"><Wand2 className="h-5 w-5 text-primary" />What's on your mind?</h2>
             <p className="mb-3 text-sm text-muted-foreground">Everything you type is saved to your notebook so suggestions get more "you" over time.</p>
-            <Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="e.g. I have a call with a sports analytics startup Thursday, and I want to finish my Claude course…" className="min-h-24 rounded-2xl" />
+            <div className="relative"><Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="e.g. I have a call with a sports analytics startup Thursday, and I want to finish my Claude course…" className="min-h-24 rounded-2xl pr-12" /><MicButton onText={(t) => setPrompt((p) => (p ? p.trimEnd() + " " : "") + t)} /></div>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button onClick={() => run("plan")} disabled={!!busy} className="rounded-full">{busy === "plan" ? <Loader2 className="animate-spin" /> : <Clock />}Generate my 4-hour plan</Button>
               <Button onClick={() => run("suggest")} disabled={!!busy} variant="secondary" className="rounded-full">{busy === "suggest" ? <Loader2 className="animate-spin" /> : <Sparkles />}Suggest micro-topics</Button>
