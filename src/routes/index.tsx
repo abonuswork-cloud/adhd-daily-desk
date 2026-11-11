@@ -33,12 +33,13 @@ const CATS = [
   { name: "Sports Tech", color: "cat-3" },
   { name: "Technology", color: "cat-6" },
   { name: "Learning Claude", color: "cat-4" },
-  { name: "Life Admin", color: "cat-5" },
+  { name: "Health & Movement", color: "cat-5" },
+  { name: "Creative Projects", color: "cat-8" },
   { name: "Hobby Maxxing", color: "cat-7" },
 ] as const;
 const colorOf = (c: string) => CATS.find((x) => x.name === c)?.color ?? "muted-foreground";
-const bg: Record<string, string> = { "cat-1": "bg-cat-1", "cat-2": "bg-cat-2", "cat-3": "bg-cat-3", "cat-4": "bg-cat-4", "cat-5": "bg-cat-5", "cat-6": "bg-cat-6", "cat-7": "bg-cat-7", "muted-foreground": "bg-muted-foreground" };
-const border: Record<string, string> = { "cat-1": "border-cat-1", "cat-2": "border-cat-2", "cat-3": "border-cat-3", "cat-4": "border-cat-4", "cat-5": "border-cat-5", "cat-6": "border-cat-6", "cat-7": "border-cat-7", "muted-foreground": "border-border" };
+const bg: Record<string, string> = { "cat-1": "bg-cat-1", "cat-2": "bg-cat-2", "cat-3": "bg-cat-3", "cat-4": "bg-cat-4", "cat-5": "bg-cat-5", "cat-6": "bg-cat-6", "cat-7": "bg-cat-7", "cat-8": "bg-cat-8", "muted-foreground": "bg-muted-foreground" };
+const border: Record<string, string> = { "cat-1": "border-cat-1", "cat-2": "border-cat-2", "cat-3": "border-cat-3", "cat-4": "border-cat-4", "cat-5": "border-cat-5", "cat-6": "border-cat-6", "cat-7": "border-cat-7", "cat-8": "border-cat-8", "muted-foreground": "border-border" };
 
 const STARTER: Topic[] = [
   { category: "Job Search", title: "Polish one resume bullet", why: "Small wins compound.", checklist: ["Pick your weakest bullet", "Add a number or result", "Read it out loud"] },
@@ -46,7 +47,10 @@ const STARTER: Topic[] = [
   { category: "Sports Tech", title: "Map 5 sports tech companies", why: "Know the landscape.", checklist: ["List 5 companies", "Note what each one sells", "Star the one you'd love to work at"] },
   { category: "Technology", title: "Learn one new term", why: "Build vocabulary daily.", checklist: ["Pick a term (e.g. RAG)", "Read one explainer", "Write a 1-sentence definition"] },
   { category: "Learning Claude", title: "Try a role prompt", why: "Prompting is a skill.", checklist: ["Give Claude a role", "Ask it to critique your idea", "Save the best prompt"] },
-  { category: "Life Admin", title: "Clear 5 emails", why: "Lighter inbox, lighter brain.", checklist: ["Open inbox", "Reply or archive 5", "Celebrate"] },
+  { category: "Health & Movement", title: "5-minute stretch reset", why: "Unlock your back and brain between blocks.", checklist: ["Stand up", "Neck + shoulder rolls", "Touch your toes"] },
+  { category: "Health & Movement", title: "Water + walk loop", why: "Hydration and a short walk restart focus.", checklist: ["Fill your water bottle", "Walk 10 minutes", "Drink half before sitting"] },
+  { category: "Creative Projects", title: "15-minute sketch or doodle", why: "Low-stakes making feels great.", checklist: ["Grab paper", "Set a 15-min timer", "Snap a photo of it"] },
+  { category: "Creative Projects", title: "Write 3 content ideas", why: "Feed your future posts.", checklist: ["Open notes", "Jot 3 post ideas", "Star your favorite"] },
 ];
 const HOBBY: Topic[] = [
   { category: "Hobby Maxxing", title: "10 minutes of French", why: "Hobbies recharge focus.", checklist: ["Open your French app or podcast", "Learn 5 new words", "Say one sentence out loud"] },
@@ -145,6 +149,8 @@ function Desk() {
   const [topics, setTopics] = useStored<Topic[]>("abd.topics", STARTER);
   useEffect(() => { setTopics((t) => t.some((x) => x.category === "Hobby Maxxing") ? t : [...t, ...HOBBY]); }, [topics.length, setTopics]);
   useEffect(() => { if (cats.includes("Breaking into Sports Tech")) setCats((c) => c.map((x) => x === "Breaking into Sports Tech" ? "Sports Tech" : x)); }, [cats, setCats]);
+  useEffect(() => { if (cats.includes("Life Admin")) setCats((c) => c.filter((x) => x !== "Life Admin")); }, [cats, setCats]);
+  useEffect(() => { if (topics.some((t) => t.category === "Life Admin")) setTopics((t) => [...t.filter((x) => x.category !== "Life Admin"), ...STARTER.filter((x) => x.category === "Health & Movement" || x.category === "Creative Projects")]); }, [topics, setTopics]);
   useEffect(() => { if (topics.some((t) => t.category === "Breaking into Sports Tech")) setTopics((t) => t.map((x) => x.category === "Breaking into Sports Tech" ? { ...x, category: "Sports Tech" } : x)); }, [topics, setTopics]);
   const [log, setLog] = useStored<LogEntry[]>("abd.log", []);
   const [openCats, setOpenCats] = useState<string[]>([]);
