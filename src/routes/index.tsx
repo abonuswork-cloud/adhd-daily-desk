@@ -30,7 +30,7 @@ type Topic = { category: string; title: string; why: string; checklist: string[]
 const CATS = [
   { name: "Job Search", color: "cat-1" },
   { name: "Starting a Company", color: "cat-2" },
-  { name: "Breaking into Sports Tech", color: "cat-3" },
+  { name: "Sports Tech", color: "cat-3" },
   { name: "Technology", color: "cat-6" },
   { name: "Learning Claude", color: "cat-4" },
   { name: "Life Admin", color: "cat-5" },
@@ -43,7 +43,7 @@ const border: Record<string, string> = { "cat-1": "border-cat-1", "cat-2": "bord
 const STARTER: Topic[] = [
   { category: "Job Search", title: "Polish one resume bullet", why: "Small wins compound.", checklist: ["Pick your weakest bullet", "Add a number or result", "Read it out loud"] },
   { category: "Starting a Company", title: "Write a one-line problem statement", why: "Clarity before building.", checklist: ["Who has the problem?", "What does it cost them?", "Write it in 20 words"] },
-  { category: "Breaking into Sports Tech", title: "Map 5 sports tech companies", why: "Know the landscape.", checklist: ["List 5 companies", "Note what each one sells", "Star the one you'd love to work at"] },
+  { category: "Sports Tech", title: "Map 5 sports tech companies", why: "Know the landscape.", checklist: ["List 5 companies", "Note what each one sells", "Star the one you'd love to work at"] },
   { category: "Technology", title: "Learn one new term", why: "Build vocabulary daily.", checklist: ["Pick a term (e.g. RAG)", "Read one explainer", "Write a 1-sentence definition"] },
   { category: "Learning Claude", title: "Try a role prompt", why: "Prompting is a skill.", checklist: ["Give Claude a role", "Ask it to critique your idea", "Save the best prompt"] },
   { category: "Life Admin", title: "Clear 5 emails", why: "Lighter inbox, lighter brain.", checklist: ["Open inbox", "Reply or archive 5", "Celebrate"] },
@@ -80,6 +80,8 @@ function Desk() {
   const [plan, setPlan] = useStored<{ date: string; note: string; blocks: Block[] }>("abd.plan", { date: "", note: "", blocks: [] });
   const [topics, setTopics] = useStored<Topic[]>("abd.topics", STARTER);
   useEffect(() => { setTopics((t) => t.some((x) => x.category === "Hobby Maxxing") ? t : [...t, ...HOBBY]); }, [topics.length, setTopics]);
+  useEffect(() => { if (cats.includes("Breaking into Sports Tech")) setCats((c) => c.map((x) => x === "Breaking into Sports Tech" ? "Sports Tech" : x)); }, [cats, setCats]);
+  useEffect(() => { if (topics.some((t) => t.category === "Breaking into Sports Tech")) setTopics((t) => t.map((x) => x.category === "Breaking into Sports Tech" ? { ...x, category: "Sports Tech" } : x)); }, [topics, setTopics]);
   const [log, setLog] = useStored<LogEntry[]>("abd.log", []);
   const [openCats, setOpenCats] = useState<string[]>([]);
   const [openLog, setOpenLog] = useState<string | null>(null);
@@ -177,7 +179,7 @@ function Desk() {
                 const on = cats.includes(c.name);
                 return (
                   <button key={c.name} onClick={() => setCats((s) => on ? s.filter((x) => x !== c.name) : [...s, c.name])}
-                    className={cn("flex items-center gap-2 rounded-sm border-2 px-4 py-2 text-sm font-semibold transition", on ? cn(bg[c.color], border[c.color], "text-foreground") : "border-border bg-background text-muted-foreground hover:text-foreground")}>
+                    className={cn("flex items-center gap-2 rounded-sm border-2 px-3 py-2 text-xs font-semibold transition", on ? cn(bg[c.color], border[c.color], "text-foreground") : "border-border bg-background text-muted-foreground hover:text-foreground")}>
                     {on ? <Check className="h-4 w-4" /> : <span className={cn("h-2.5 w-2.5 rounded-full", bg[c.color])} />}{c.name}
                   </button>
                 );
