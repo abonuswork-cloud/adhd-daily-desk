@@ -30,3 +30,4 @@ use the editor.
 <!-- LOVABLE:END -->
 
 - Desk data (plan, notebook, topics, categories) lives in browser localStorage; AI calls go through src/lib/desk.functions.ts server function — single-user home page, no accounts needed.
+- Keep category names, color assignments, and AI-label normalization in the shared desk-categories module so generated plans and focus controls stay aligned.

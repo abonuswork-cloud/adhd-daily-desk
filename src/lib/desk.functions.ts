@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { CATS } from "./desk-categories";
 
 const Input = z.object({
   mode: z.enum(["plan", "suggest", "stuck"]),
@@ -20,6 +21,7 @@ export const askDesk = createServerFn({ method: "POST" })
     };
     const input = `You are a friendly ADHD-aware desk coach for Angelica. Keep things tiny, concrete, dopamine-friendly. "Hobby Maxxing" covers her hobbies: learning French, reading, and gaming (emulator experimenting, cozy games, PS5 Call of Duty).
 Chosen focus categories: ${data.categories.join(", ") || "any"}.
+Use these exact category names only: ${CATS.map((c) => c.name).join(", ")}, or "Break" for breaks. Keep each block focused on a single category. French, books, reading for pleasure, and gaming belong to "Hobby Maxxing"; Lovable belongs to "Technology", not "Creative" or "Learning Claude". Never invent categories or combine category names.
 She is a photographer/videographer. Never suggest anything resembling a "Not for me" item below.
 What she's taught you before (her notebook, newest last):
 ${data.notebook.map((n) => "- " + n).join("\n") || "(nothing yet)"}

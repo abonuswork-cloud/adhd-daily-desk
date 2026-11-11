@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Check, Loader2, LifeBuoy, Sparkles, Plus, Trash2, BookOpen, Wand2, Clock, History, ChevronDown, X, Mic, MicOff } from "lucide-react";
 import { askDesk } from "@/lib/desk.functions";
+import { CATS, colorOf, deskCategory } from "@/lib/desk-categories";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -27,17 +28,6 @@ type Task = { id: string; text: string; done: boolean };
 type Block = { id: string; label: string; minutes: number; category: string; tasks: Task[] };
 type Topic = { category: string; title: string; why: string; checklist: string[] };
 
-const CATS = [
-  { name: "Job Search", color: "cat-1" },
-  { name: "Starting a Company", color: "cat-2" },
-  { name: "Sports Tech", color: "cat-3" },
-  { name: "Technology", color: "cat-6" },
-  { name: "Learning Claude", color: "cat-4" },
-  { name: "Health & Movement", color: "cat-5" },
-  { name: "Creative", color: "cat-8" },
-  { name: "Hobby Maxxing", color: "cat-7" },
-] as const;
-const colorOf = (c: string) => CATS.find((x) => x.name === c)?.color ?? "muted-foreground";
 const bg: Record<string, string> = { "cat-1": "bg-cat-1", "cat-2": "bg-cat-2", "cat-3": "bg-cat-3", "cat-4": "bg-cat-4", "cat-5": "bg-cat-5", "cat-6": "bg-cat-6", "cat-7": "bg-cat-7", "cat-8": "bg-cat-8", "muted-foreground": "bg-muted-foreground" };
 const border: Record<string, string> = { "cat-1": "border-cat-1", "cat-2": "border-cat-2", "cat-3": "border-cat-3", "cat-4": "border-cat-4", "cat-5": "border-cat-5", "cat-6": "border-cat-6", "cat-7": "border-cat-7", "cat-8": "border-cat-8", "muted-foreground": "border-border" };
 
@@ -202,13 +192,13 @@ function Desk() {
     if (!res.ok) { toast.error(res.error); return; }
     const j = JSON.parse(res.json) as { blocks?: any[]; note?: string; topics?: any[]; tasks?: string[]; nudge?: string };
     if (mode === "plan") {
-      const blocks: Block[] = (j.blocks ?? []).map((b: any) => ({ id: uid(), label: String(b.label), minutes: Number(b.minutes) || 30, category: String(b.category ?? ""), tasks: (b.tasks ?? []).map((t: string) => ({ id: uid(), text: String(t), done: false })) }));
+      const blocks: Block[] = (j.blocks ?? []).map((b: any) => ({ id: uid(), label: String(b.label), minutes: Number(b.minutes) || 30, category: deskCategory(String(b.category ?? ""), String(b.label), (b.tasks ?? []).map(String)), tasks: (b.tasks ?? []).map((t: string) => ({ id: uid(), text: String(t), done: false })) }));
       saveToLog(plan, true);
       setPlan({ date: today(), note: String(j.note ?? ""), blocks });
       setPrompt("");
       toast.success("Your 4-hour plan is ready ✨");
     } else if (mode === "suggest") {
-      setTopics((j.topics ?? []).map((t: any) => ({ category: String(t.category), title: String(t.title), why: String(t.why ?? ""), checklist: (t.checklist ?? []).map(String) })));
+      setTopics((j.topics ?? []).map((t: any) => ({ category: deskCategory(String(t.category), String(t.title), (t.checklist ?? []).map(String)), title: String(t.title), why: String(t.why ?? ""), checklist: (t.checklist ?? []).map(String) })));
       setPrompt("");
     } else {
       const tasks = (j.tasks ?? []).map((t: string) => ({ id: uid(), text: String(t), done: false }));
@@ -323,7 +313,7 @@ function Desk() {
             ) : (
               <div className="space-y-4">
                 {plan.blocks.map((b) => {
-                  const c = colorOf(b.category);
+                  const c = colorOf(deskCategory(b.category, b.label, b.tasks.map((t) => t.text)));
                   const bd = b.tasks.length && b.tasks.every((t) => t.done);
                   return (
                     <div key={b.id} className={cn("rounded-2xl border-l-8 bg-background p-4", border[c], bd && "opacity-60")}>
