@@ -123,7 +123,7 @@ function Affirmation() {
   return (
     <section className="paper text-right">
       <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Today's affirmation</p>
-      <p className="font-display text-xl italic leading-snug">{text ? `“${text}”` : "\u00a0"}</p>
+      <p className="font-display text-xl italic leading-snug text-balance">{text ? (() => { const parts = text.match(/[^.!?]+[.!?]+/g)?.map((x) => x.trim()) ?? [text]; return parts.map((x, i) => <span key={i} className="block">{i === 0 ? "“" : ""}{x}{i === parts.length - 1 ? "”" : ""}</span>); })() : "\u00a0"}</p>
       <p className="mt-2 text-[10px] text-muted-foreground">A new one every day.</p>
     </section>
   );
