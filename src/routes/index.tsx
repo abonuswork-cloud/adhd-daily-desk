@@ -60,7 +60,8 @@ type LogEntry = { id: string; savedAt: string; date: string; note: string; block
 const WEEK = 7 * 24 * 60 * 60 * 1000;
 
 const uid = () => Math.random().toString(36).slice(2, 10);
-const today = () => new Date().toISOString().slice(0, 10);
+const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const today = () => dayKey(new Date());
 
 function useStored<T>(key: string, init: T) {
   const [v, setV] = useState<T>(init);
@@ -72,6 +73,69 @@ function useStored<T>(key: string, init: T) {
   useEffect(() => { if (ready) localStorage.setItem(key, JSON.stringify(v)); }, [key, v, ready]);
   return [v, setV] as const;
 }
+
+const AFFIRMATIONS = [
+  "Starting small still counts as starting.",
+  "My brain works differently, and that's a strength.",
+  "One checked box is proof I showed up.",
+  "I don't need to do it all — just the next thing.",
+  "Rest is part of the plan, not a break from it.",
+  "I'm allowed to change course without losing progress.",
+  "Curiosity is my superpower.",
+  "Done is better than perfect.",
+  "I can do hard things for ten minutes.",
+  "My worth isn't measured by my to-do list.",
+  "Every expert was once a beginner.",
+  "I'm building something, one block at a time.",
+  "It's okay to ask for help — even from a button.",
+  "Today I'll be kind to future me.",
+  "Progress, not pressure.",
+  "My ideas deserve space on the page.",
+  "I'm exactly where I need to start.",
+  "Small wins add up to big changes.",
+  "I can focus on one thing at a time.",
+  "I celebrate every step forward.",
+  "My energy is valuable; I spend it on what matters.",
+  "I'm learning, and that's the whole point.",
+  "Messy action beats perfect planning.",
+  "I trust myself to figure it out.",
+  "Today's effort is enough.",
+  "I'm the kind of person who keeps coming back.",
+  "Hobbies aren't a distraction — they're fuel.",
+  "I give myself permission to go at my own pace.",
+  "My future is being written in pencil, and I hold it.",
+  "I've done hard days before. I can do this one.",
+  "Joy is productive too.",
+];
+
+function Affirmation() {
+  const [text, setText] = useState<string | null>(null);
+  useEffect(() => {
+    const d = new Date();
+    const n = Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 86400000);
+    setText(AFFIRMATIONS[n % AFFIRMATIONS.length]);
+  }, []);
+  return (
+    <section className="paper">
+      <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Today's affirmation</p>
+      <p className="font-display text-xl italic leading-snug">{text ? `“${text}”` : "\u00a0"}</p>
+      <p className="mt-2 text-[10px] text-muted-foreground">A new one every day.</p>
+    </section>
+  );
+}
+
+function DeskClock() {
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => { setNow(new Date()); const i = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(i); }, []);
+  return (
+    <div className="paper-sm text-right" aria-live="off">
+      <p className="font-display text-2xl font-bold tabular-nums">{now ? now.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit" }) : "--:--"}</p>
+      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">local time</p>
+    </div>
+  );
+}
+
+const weekNo = (d: Date) => { const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7)); return Math.ceil(((t.getTime() - Date.UTC(t.getUTCFullYear(), 0, 1)) / 86400000 + 1) / 7); };
 
 function Desk() {
   const ask = useServerFn(askDesk);
@@ -149,6 +213,16 @@ function Desk() {
     setNewTask("");
   }
 
+  const week = useMemo(() => {
+    const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(start); d.setDate(start.getDate() + i);
+      const key = dayKey(d);
+      const sources = [...log.filter((e) => e.date === key), ...(plan.date === key ? [plan] : [])];
+      const ts = sources.flatMap((x) => x.blocks.flatMap((b) => b.tasks));
+      return { key, label: d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 2), done: ts.filter((t) => t.done).length, total: ts.length, isToday: key === today() };
+    });
+  }, [log, plan]);
   const grouped = CATS.map((c) => ({ ...c, items: topics.filter((t) => t.category === c.name) })).filter((g) => g.items.length);
   const other = topics.filter((t) => !CATS.some((c) => c.name === t.category));
   const groups = [...grouped, ...(other.length ? [{ name: "Other", color: "muted-foreground", items: other }] : [])];
@@ -157,16 +231,21 @@ function Desk() {
     <div className="min-h-screen bg-background font-sans text-foreground">
       <header className="mx-auto flex max-w-6xl flex-wrap items-end justify-between gap-4 px-6 pt-10">
         <div>
-          <p className="text-sm font-medium text-muted-foreground">{new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</p>
+          <div className="mb-2 flex items-center gap-3 border-b-2 border-double border-foreground/40 pb-1 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            <span className="font-bold text-foreground">{new Date().toLocaleDateString(undefined, { weekday: "long" })}</span>
+            <span>{new Date().toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}</span>
+            <span>· Week {weekNo(new Date())}</span>
+          </div>
           <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">AB ADHD <span className="text-primary">Daily Desk</span></h1>
         </div>
+        <div className="flex items-stretch gap-3"><DeskClock />
         <div className="flex items-center gap-4 rounded-sm border bg-card px-5 py-3 shadow-[3px_4px_0_-1px_var(--border)]">
           <div className="relative h-14 w-14">
             <svg viewBox="0 0 36 36" className="h-14 w-14 -rotate-90"><circle cx="18" cy="18" r="15" fill="none" stroke="var(--muted)" strokeWidth="4" /><circle cx="18" cy="18" r="15" fill="none" stroke="var(--primary)" strokeWidth="4" strokeLinecap="round" strokeDasharray={`${pct * 0.942} 100`} className="transition-all duration-500" /></svg>
             <span className="absolute inset-0 grid place-items-center text-xs font-bold">{pct}%</span>
           </div>
           <div><p className="font-display text-2xl font-bold">{done}/{all.length}</p><p className="text-xs text-muted-foreground">done today</p></div>
-        </div>
+        </div></div>
       </header>
 
       <main className="mx-auto grid max-w-6xl gap-6 px-6 py-8 lg:grid-cols-[1fr_380px]">
@@ -245,6 +324,7 @@ function Desk() {
         </div>
 
         <aside className="space-y-6">
+          <Affirmation />
           <button onClick={() => run("stuck")} disabled={!!busy} className="flex w-full items-center justify-center gap-3 rounded-sm border-2 border-foreground bg-accent px-6 py-6 shadow-[4px_4px_0_var(--foreground)] font-display text-2xl font-extrabold text-accent-foreground shadow-sm transition hover:-rotate-1 hover:scale-[1.02] disabled:opacity-60">
             {busy === "stuck" ? <Loader2 className="h-7 w-7 animate-spin" /> : <LifeBuoy className="h-7 w-7" />} I'm stuck
           </button>
@@ -274,6 +354,20 @@ function Desk() {
             </div>
           </section>
 
+          <div className="relative">
+          <section className="paper relative z-10 -mb-2 rotate-[-0.6deg]">
+            <h2 className="mb-2 font-display text-lg font-bold">This week</h2>
+            <div className="grid grid-cols-7 gap-1 text-center">
+              {week.map((d) => (
+                <div key={d.key} className={cn("rounded-sm border px-0.5 py-1.5", d.isToday ? "border-foreground bg-accent" : "border-border bg-background")}>
+                  <p className="text-[10px] font-bold uppercase">{d.label}</p>
+                  <p className="font-display text-lg font-bold leading-tight">{d.done}</p>
+                  <p className="text-[9px] text-muted-foreground">/{d.total}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">{week.reduce((a, d) => a + d.done, 0)} tasks checked off this week{week.filter((d) => d.done).length ? ` · ${week.filter((d) => d.done).length} active days` : ""}.</p>
+          </section>
           <section className="paper">
             <h2 className="mb-1 flex items-center gap-2 font-display text-lg font-bold"><History className="h-5 w-5 text-primary" />Log</h2>
             <p className="mb-3 text-xs text-muted-foreground">Past desk lists, kept for 7 days. Old lists save here automatically when you make a new plan.</p>
@@ -299,6 +393,7 @@ function Desk() {
               </ul>
             )}
           </section>
+          </div>
 
           <section className="paper">
             <h2 className="mb-1 flex items-center gap-2 font-display text-lg font-bold"><BookOpen className="h-5 w-5 text-primary" />My notebook</h2>

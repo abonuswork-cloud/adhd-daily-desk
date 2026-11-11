@@ -95,7 +95,7 @@
   --secondary-foreground: oklch(0.22 0 0);
   --muted: oklch(0.92 0 0);
   --muted-foreground: oklch(0.48 0 0);
-  --accent: oklch(0.92 0.15 100);
+  --accent: oklch(0.86 0 0);
   --accent-foreground: oklch(0.22 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.99 0 0);
@@ -173,3 +173,7 @@ body { background-color: var(--background); background-image: radial-gradient(ok
   animation: strike 0.35s ease-out;
 }
 @keyframes strike { from { text-decoration-color: transparent; } to { text-decoration-color: var(--primary); } }
+@utility paper-sm {
+  border: 1px solid var(--border); border-radius: 2px; padding: 0.75rem 1.25rem; background-color: var(--card);
+  box-shadow: 3px 4px 0 -1px var(--border);
+}

@@ -1,0 +1,3 @@
+- [x] Clock, date header, weekly overview
+- [x] Grayscale I'm stuck button
+- [x] Daily affirmation sheet (changes every 24h)
