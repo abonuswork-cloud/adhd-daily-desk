@@ -34,7 +34,7 @@ const CATS = [
   { name: "Technology", color: "cat-6" },
   { name: "Learning Claude", color: "cat-4" },
   { name: "Health & Movement", color: "cat-5" },
-  { name: "Creative Projects", color: "cat-8" },
+  { name: "Creative", color: "cat-8" },
   { name: "Hobby Maxxing", color: "cat-7" },
 ] as const;
 const colorOf = (c: string) => CATS.find((x) => x.name === c)?.color ?? "muted-foreground";
@@ -49,9 +49,9 @@ const STARTER: Topic[] = [
   { category: "Learning Claude", title: "Try a role prompt", why: "Prompting is a skill.", checklist: ["Give Claude a role", "Ask it to critique your idea", "Save the best prompt"] },
   { category: "Health & Movement", title: "5-minute stretch reset", why: "Unlock your back and brain between blocks.", checklist: ["Stand up", "Neck + shoulder rolls", "Touch your toes"] },
   { category: "Health & Movement", title: "Water + walk loop", why: "Hydration and a short walk restart focus.", checklist: ["Fill your water bottle", "Walk 10 minutes", "Drink half before sitting"] },
-  { category: "Creative Projects", title: "Photo walk: 10 shots", why: "Train your eye in 20 minutes.", checklist: ["Pick a theme or color", "Shoot 10 frames", "Pick your best one"] },
-  { category: "Creative Projects", title: "Edit one short clip", why: "Small edits build a reel.", checklist: ["Pick 3 clips", "Cut to 15–30 sec", "Export and save"] },
-  { category: "Creative Projects", title: "Write 3 content ideas", why: "Feed your future posts.", checklist: ["Open notes", "Jot 3 post ideas", "Star your favorite"] },
+  { category: "Creative", title: "Photo walk: 10 shots", why: "Train your eye in 20 minutes.", checklist: ["Pick a theme or color", "Shoot 10 frames", "Pick your best one"] },
+  { category: "Creative", title: "Edit one short clip", why: "Small edits build a reel.", checklist: ["Pick 3 clips", "Cut to 15–30 sec", "Export and save"] },
+  { category: "Creative", title: "Write 3 content ideas", why: "Feed your future posts.", checklist: ["Open notes", "Jot 3 post ideas", "Star your favorite"] },
 ];
 const HOBBY: Topic[] = [
   { category: "Hobby Maxxing", title: "10 minutes of French", why: "Hobbies recharge focus.", checklist: ["Open your French app or podcast", "Learn 5 new words", "Say one sentence out loud"] },
@@ -151,8 +151,9 @@ function Desk() {
   useEffect(() => { setTopics((t) => t.some((x) => x.category === "Hobby Maxxing") ? t : [...t, ...HOBBY]); }, [topics.length, setTopics]);
   useEffect(() => { if (cats.includes("Breaking into Sports Tech")) setCats((c) => c.map((x) => x === "Breaking into Sports Tech" ? "Sports Tech" : x)); }, [cats, setCats]);
   useEffect(() => { if (topics.some((t) => t.title === "15-minute sketch or doodle")) setTopics((t) => [...t.filter((x) => x.title !== "15-minute sketch or doodle"), ...STARTER.filter((x) => x.title === "Photo walk: 10 shots" || x.title === "Edit one short clip")]); }, [topics, setTopics]);
+  useEffect(() => { if (cats.includes("Creative Projects")) setCats((c) => c.map((x) => x === "Creative Projects" ? "Creative" : x)); if (topics.some((t) => t.category === "Creative Projects")) setTopics((t) => t.map((x) => x.category === "Creative Projects" ? { ...x, category: "Creative" } : x)); }, [cats, topics, setCats, setTopics]);
   useEffect(() => { if (cats.includes("Life Admin")) setCats((c) => c.filter((x) => x !== "Life Admin")); }, [cats, setCats]);
-  useEffect(() => { if (topics.some((t) => t.category === "Life Admin")) setTopics((t) => [...t.filter((x) => x.category !== "Life Admin"), ...STARTER.filter((x) => x.category === "Health & Movement" || x.category === "Creative Projects")]); }, [topics, setTopics]);
+  useEffect(() => { if (topics.some((t) => t.category === "Life Admin")) setTopics((t) => [...t.filter((x) => x.category !== "Life Admin"), ...STARTER.filter((x) => x.category === "Health & Movement" || x.category === "Creative")]); }, [topics, setTopics]);
   useEffect(() => { if (topics.some((t) => t.category === "Breaking into Sports Tech")) setTopics((t) => t.map((x) => x.category === "Breaking into Sports Tech" ? { ...x, category: "Sports Tech" } : x)); }, [topics, setTopics]);
   const [log, setLog] = useStored<LogEntry[]>("abd.log", []);
   const [openCats, setOpenCats] = useState<string[]>([]);
