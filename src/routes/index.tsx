@@ -116,7 +116,7 @@ function Affirmation() {
     setText(AFFIRMATIONS[n % AFFIRMATIONS.length] ?? null);
   }, []);
   return (
-    <section className="paper">
+    <section className="paper text-right">
       <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Today's affirmation</p>
       <p className="font-display text-xl italic leading-snug">{text ? `“${text}”` : "\u00a0"}</p>
       <p className="mt-2 text-[10px] text-muted-foreground">A new one every day.</p>
@@ -126,10 +126,10 @@ function Affirmation() {
 
 function DeskClock() {
   const [now, setNow] = useState<Date | null>(null);
-  useEffect(() => { setNow(new Date()); const i = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(i); }, []);
+  useEffect(() => { setNow(new Date()); const i = setInterval(() => setNow(new Date()), 15000); return () => clearInterval(i); }, []);
   return (
     <div className="paper-sm text-right" aria-live="off">
-      <p className="font-display text-2xl font-bold tabular-nums">{now ? now.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit" }) : "--:--"}</p>
+      <p className="font-display text-2xl font-bold tabular-nums">{now ? now.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }) : "--:--"}</p>
       <p className="text-[10px] uppercase tracking-widest text-muted-foreground">local time</p>
     </div>
   );
@@ -321,6 +321,19 @@ function Desk() {
               <Button onClick={addOwn} size="icon" variant="secondary" className="shrink-0 rounded-full" aria-label="Add task"><Plus /></Button>
             </div>
           </section>
+          <section className="paper rotate-[-0.4deg]">
+            <h2 className="mb-2 font-display text-lg font-bold">This week</h2>
+            <div className="grid grid-cols-7 gap-2 text-center">
+              {week.map((d) => (
+                <div key={d.key} className={cn("rounded-sm border px-1 py-3", d.isToday ? "border-foreground bg-accent" : "border-border bg-background")}>
+                  <p className="text-xs font-bold uppercase">{d.label}</p>
+                  <p className="font-display text-3xl font-bold leading-tight">{d.done}</p>
+                  <p className="text-xs text-muted-foreground">/{d.total}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">{week.reduce((a, d) => a + d.done, 0)} tasks checked off this week{week.filter((d) => d.done).length ? ` · ${week.filter((d) => d.done).length} active days` : ""}.</p>
+          </section>
         </div>
 
         <aside className="space-y-6">
@@ -355,19 +368,6 @@ function Desk() {
           </section>
 
           <div className="relative">
-          <section className="paper relative z-10 -mb-2 rotate-[-0.6deg]">
-            <h2 className="mb-2 font-display text-lg font-bold">This week</h2>
-            <div className="grid grid-cols-7 gap-1 text-center">
-              {week.map((d) => (
-                <div key={d.key} className={cn("rounded-sm border px-0.5 py-1.5", d.isToday ? "border-foreground bg-accent" : "border-border bg-background")}>
-                  <p className="text-[10px] font-bold uppercase">{d.label}</p>
-                  <p className="font-display text-lg font-bold leading-tight">{d.done}</p>
-                  <p className="text-[9px] text-muted-foreground">/{d.total}</p>
-                </div>
-              ))}
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">{week.reduce((a, d) => a + d.done, 0)} tasks checked off this week{week.filter((d) => d.done).length ? ` · ${week.filter((d) => d.done).length} active days` : ""}.</p>
-          </section>
           <section className="paper">
             <h2 className="mb-1 flex items-center gap-2 font-display text-lg font-bold"><History className="h-5 w-5 text-primary" />Log</h2>
             <p className="mb-3 text-xs text-muted-foreground">Past desk lists, kept for 7 days. Old lists save here automatically when you make a new plan.</p>
