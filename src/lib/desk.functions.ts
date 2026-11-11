@@ -14,7 +14,7 @@ export const askDesk = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { generateChatCompletion, GatewayError } = await import("@lovable.dev/ai-gateway");
     const shapes = {
-      plan: `{"blocks":[{"label":"9:00–10:00 · Deep focus","minutes":60,"category":"...","tasks":["..."]}],"note":"one encouraging sentence"}  — total about 240 minutes, 4-6 blocks including one or two 10-15 min breaks (category "Break"). 2-4 small concrete tasks per block, each doable in 10-25 minutes, starting with a verb.`,
+      plan: `{"blocks":[{"label":"Deep focus","minutes":60,"category":"...","tasks":["..."]}],"note":"one encouraging sentence"}  — total about 240 minutes, labels are short names only (never clock times), 4-6 blocks including one or two 10-15 min breaks (category "Break"). 2-4 small concrete tasks per block, each doable in 10-25 minutes, starting with a verb.`,
       suggest: `{"topics":[{"category":"...","title":"short micro-topic","why":"one line","checklist":["3-5 tiny steps"]}]} — 6 topics across the chosen categories, PLUS always 2-3 extra topics with category "Hobby Maxxing" (French, reading, or gaming).`,
       stuck: `{"nudge":"one warm sentence","tasks":["3 ultra-small 2-5 minute starter tasks"]}`,
     };

@@ -311,9 +311,8 @@ function Desk() {
                   return (
                     <div key={b.id} className={cn("rounded-2xl border-l-8 bg-background p-4", border[c], bd && "opacity-60")}>
                       <div className="mb-2 flex items-center justify-between gap-2">
-                        <p className="font-display font-bold">{b.label}</p>
+                        <p className="flex items-baseline gap-2"><span className="font-display text-2xl font-bold tabular-nums">{b.minutes} min</span><span className="text-sm text-muted-foreground">{b.label.replace(/^\s*\d{1,2}(:\d{2})?\s*(am|pm)?\s*[–—-]\s*\d{1,2}(:\d{2})?\s*(am|pm)?\s*[·:|-]?\s*/i, "")}</span></p>
                         <div className="flex items-center gap-2">
-                          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold">{b.minutes} min</span>
                           <button aria-label="Remove block" onClick={() => setPlan((p) => ({ ...p, blocks: p.blocks.filter((x) => x.id !== b.id) }))} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
                         </div>
                       </div>
