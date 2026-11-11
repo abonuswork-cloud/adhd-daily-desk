@@ -157,6 +157,7 @@ function Desk() {
   useEffect(() => { if (topics.some((t) => t.category === "Breaking into Sports Tech")) setTopics((t) => t.map((x) => x.category === "Breaking into Sports Tech" ? { ...x, category: "Sports Tech" } : x)); }, [topics, setTopics]);
   const [log, setLog] = useStored<LogEntry[]>("abd.log", []);
   const [openCats, setOpenCats] = useState<string[]>([]);
+  const [nbAll, setNbAll] = useState(false);
   const [openLog, setOpenLog] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
   useEffect(() => { setLog((l) => { const k = l.filter((e) => Date.now() - new Date(e.savedAt).getTime() < WEEK); return k.length === l.length ? l : k; }); }, [log.length, setLog]);
@@ -411,11 +412,11 @@ function Desk() {
           </div>
 
           <section className="paper">
-            <h2 className="mb-1 flex items-center gap-2 font-display text-lg font-bold"><BookOpen className="h-5 w-5 text-primary" />My notebook</h2>
+            <div className="mb-1 flex items-center justify-between gap-2"><h2 className="flex items-center gap-2 font-display text-lg font-bold"><BookOpen className="h-5 w-5 text-primary" />My notebook</h2>{notebook.length > 3 && <button onClick={() => setNbAll((v) => !v)} className="text-xs font-semibold text-primary hover:underline">{nbAll ? "Collapse" : `Show all (${notebook.length})`}</button>}</div>
             <p className="mb-3 text-xs text-muted-foreground">What the desk has learned about you. Remove anything that's no longer true.</p>
             {notebook.length === 0 ? <p className="text-sm text-muted-foreground">Empty for now — type a prompt to start.</p> : (
               <ul className="max-h-72 space-y-1.5 overflow-auto">
-                {[...notebook].reverse().map((n) => (
+                {[...notebook].reverse().slice(0, nbAll ? undefined : 3).map((n) => (
                   <li key={n.id} className="group flex items-start justify-between gap-2 rounded-lg bg-muted px-3 py-2 text-xs">
                     <span>{n.text}</span>
                     <button aria-label="Forget" onClick={() => setNotebook((s) => s.filter((x) => x.id !== n.id))} className="text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
