@@ -158,7 +158,7 @@ function Desk() {
           <p className="text-sm font-medium text-muted-foreground">{new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</p>
           <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">AB ADHD <span className="text-primary">Daily Desk</span></h1>
         </div>
-        <div className="flex items-center gap-4 rounded-2xl border bg-card px-5 py-3">
+        <div className="flex items-center gap-4 rounded-sm border bg-card px-5 py-3 shadow-[3px_4px_0_-1px_var(--border)]">
           <div className="relative h-14 w-14">
             <svg viewBox="0 0 36 36" className="h-14 w-14 -rotate-90"><circle cx="18" cy="18" r="15" fill="none" stroke="var(--muted)" strokeWidth="4" /><circle cx="18" cy="18" r="15" fill="none" stroke="var(--primary)" strokeWidth="4" strokeLinecap="round" strokeDasharray={`${pct * 0.942} 100`} className="transition-all duration-500" /></svg>
             <span className="absolute inset-0 grid place-items-center text-xs font-bold">{pct}%</span>
@@ -170,14 +170,14 @@ function Desk() {
       <main className="mx-auto grid max-w-6xl gap-6 px-6 py-8 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">
           {/* Categories */}
-          <section className="rounded-3xl border bg-card p-5">
+          <section className="paper">
             <h2 className="mb-3 font-display text-lg font-bold">Today I want to focus on…</h2>
             <div className="flex flex-wrap gap-2">
               {CATS.map((c) => {
                 const on = cats.includes(c.name);
                 return (
                   <button key={c.name} onClick={() => setCats((s) => on ? s.filter((x) => x !== c.name) : [...s, c.name])}
-                    className={cn("flex items-center gap-2 rounded-full border-2 px-4 py-2 text-sm font-semibold transition", on ? cn(bg[c.color], border[c.color], "text-foreground") : "border-border bg-background text-muted-foreground hover:text-foreground")}>
+                    className={cn("flex items-center gap-2 rounded-sm border-2 px-4 py-2 text-sm font-semibold transition", on ? cn(bg[c.color], border[c.color], "text-foreground") : "border-border bg-background text-muted-foreground hover:text-foreground")}>
                     {on ? <Check className="h-4 w-4" /> : <span className={cn("h-2.5 w-2.5 rounded-full", bg[c.color])} />}{c.name}
                   </button>
                 );
@@ -186,7 +186,7 @@ function Desk() {
           </section>
 
           {/* Prompt */}
-          <section className="rounded-3xl border bg-card p-5">
+          <section className="paper">
             <h2 className="mb-1 flex items-center gap-2 font-display text-lg font-bold"><Wand2 className="h-5 w-5 text-primary" />What's on your mind?</h2>
             <p className="mb-3 text-sm text-muted-foreground">Everything you type is saved to your notebook so suggestions get more "you" over time.</p>
             <Textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="e.g. I have a call with a sports analytics startup Thursday, and I want to finish my Claude course…" className="min-h-24 rounded-2xl" />
@@ -197,7 +197,7 @@ function Desk() {
           </section>
 
           {/* Plan */}
-          <section className="rounded-3xl border bg-card p-5">
+          <section className="paper">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-display text-lg font-bold">Today's desk list</h2>
               {plan.blocks.length > 0 && <div className="flex gap-3"><button onClick={() => saveToLog(plan)} className="text-xs font-semibold text-primary hover:underline">Save to log</button><button onClick={() => { saveToLog(plan, true); setPlan({ date: "", note: "", blocks: [] }); }} className="text-xs text-muted-foreground hover:text-destructive">Clear</button></div>}
@@ -225,7 +225,7 @@ function Desk() {
                           <li key={t.id}>
                             <button onClick={() => toggle(b.id, t.id)} className="group flex w-full items-start gap-3 rounded-lg p-1 text-left hover:bg-muted">
                               <span className={cn("mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 transition", t.done ? cn(bg[c], border[c], "scale-110") : "border-border")}>{t.done && <Check className="h-3.5 w-3.5" strokeWidth={3} />}</span>
-                              <span className={cn("text-sm", t.done && "text-muted-foreground line-through")}>{t.text}</span>
+                              <span className={cn("text-sm", t.done && "text-muted-foreground ink-strike")}>{t.text}</span>
                             </button>
                           </li>
                         ))}
@@ -243,11 +243,11 @@ function Desk() {
         </div>
 
         <aside className="space-y-6">
-          <button onClick={() => run("stuck")} disabled={!!busy} className="flex w-full items-center justify-center gap-3 rounded-3xl bg-accent px-6 py-6 font-display text-2xl font-extrabold text-accent-foreground shadow-sm transition hover:-rotate-1 hover:scale-[1.02] disabled:opacity-60">
+          <button onClick={() => run("stuck")} disabled={!!busy} className="flex w-full items-center justify-center gap-3 rounded-sm border-2 border-foreground bg-accent px-6 py-6 shadow-[4px_4px_0_var(--foreground)] font-display text-2xl font-extrabold text-accent-foreground shadow-sm transition hover:-rotate-1 hover:scale-[1.02] disabled:opacity-60">
             {busy === "stuck" ? <Loader2 className="h-7 w-7 animate-spin" /> : <LifeBuoy className="h-7 w-7" />} I'm stuck
           </button>
 
-          <section className="rounded-3xl border bg-card p-5">
+          <section className="paper">
             <div className="mb-3 flex items-center justify-between gap-2">
               <h2 className="flex items-center gap-2 font-display text-lg font-bold"><Sparkles className="h-5 w-5 text-primary" />Suggested micro-topics</h2>
               <button onClick={() => setOpenCats(openCats.length >= groups.length ? [] : groups.map((g) => g.name))} className="text-xs font-semibold text-primary hover:underline">{openCats.length >= groups.length ? "Hide all" : "Show all"}</button>
@@ -272,7 +272,7 @@ function Desk() {
             </div>
           </section>
 
-          <section className="rounded-3xl border bg-card p-5">
+          <section className="paper">
             <h2 className="mb-1 flex items-center gap-2 font-display text-lg font-bold"><History className="h-5 w-5 text-primary" />Log</h2>
             <p className="mb-3 text-xs text-muted-foreground">Past desk lists, kept for 7 days. Old lists save here automatically when you make a new plan.</p>
             {log.length === 0 ? <p className="text-sm text-muted-foreground">No saved lists yet.</p> : (
@@ -289,7 +289,7 @@ function Desk() {
                         </div>
                       </div>
                       {openLog === e.id && e.blocks.map((b) => (
-                        <div key={b.id} className="mt-2"><p className="font-semibold">{b.label}</p><ul className="ml-1">{b.tasks.map((t) => <li key={t.id} className={cn(t.done && "text-muted-foreground line-through")}>{t.done ? "✓" : "○"} {t.text}</li>)}</ul></div>
+                        <div key={b.id} className="mt-2"><p className="font-semibold">{b.label}</p><ul className="ml-1">{b.tasks.map((t) => <li key={t.id} className={cn(t.done && "text-muted-foreground ink-strike")}>{t.done ? "✓" : "○"} {t.text}</li>)}</ul></div>
                       ))}
                     </li>
                   );
@@ -298,7 +298,7 @@ function Desk() {
             )}
           </section>
 
-          <section className="rounded-3xl border bg-card p-5">
+          <section className="paper">
             <h2 className="mb-1 flex items-center gap-2 font-display text-lg font-bold"><BookOpen className="h-5 w-5 text-primary" />My notebook</h2>
             <p className="mb-3 text-xs text-muted-foreground">What the desk has learned about you. Remove anything that's no longer true.</p>
             {notebook.length === 0 ? <p className="text-sm text-muted-foreground">Empty for now — type a prompt to start.</p> : (
