@@ -102,13 +102,13 @@
   --border: oklch(0.84 0 0);
   --input: oklch(0.84 0 0);
   --ring: oklch(0.3 0 0);
-  --cat-1: oklch(0.84 0.1 20);
-  --cat-2: oklch(0.87 0.08 190);
-  --cat-3: oklch(0.92 0.12 100);
-  --cat-4: oklch(0.83 0.09 295);
-  --cat-5: oklch(0.88 0.1 145);
-  --cat-6: oklch(0.84 0.08 245);
-  --cat-7: oklch(0.86 0.09 345);
+  --cat-1: oklch(0.76 0.14 25);
+  --cat-2: oklch(0.8 0.1 190);
+  --cat-3: oklch(0.91 0.05 45);
+  --cat-4: oklch(0.72 0.15 340);
+  --cat-5: oklch(0.92 0.025 180);
+  --cat-6: oklch(0.68 0.05 240);
+  --cat-7: oklch(0.63 0.11 15);
 }
 
 .dark {
