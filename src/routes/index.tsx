@@ -47,8 +47,15 @@ const STARTER: Topic[] = [
   { category: "Technology", title: "Learn one new term", why: "Build vocabulary daily.", checklist: ["Pick a term (e.g. RAG)", "Read one explainer", "Write a 1-sentence definition"] },
   { category: "Learning Claude", title: "Try a role prompt", why: "Prompting is a skill.", checklist: ["Give Claude a role", "Ask it to critique your idea", "Save the best prompt"] },
   { category: "Life Admin", title: "Clear 5 emails", why: "Lighter inbox, lighter brain.", checklist: ["Open inbox", "Reply or archive 5", "Celebrate"] },
-  { category: "Hobby Maxxing", title: "10 minutes of French", why: "Hobbies recharge focus.", checklist: ["Open your French app or podcast", "Learn 5 new words", "Say one sentence out loud"] },
 ];
+const HOBBY: Topic[] = [
+  { category: "Hobby Maxxing", title: "10 minutes of French", why: "Hobbies recharge focus.", checklist: ["Open your French app or podcast", "Learn 5 new words", "Say one sentence out loud"] },
+  { category: "Hobby Maxxing", title: "Read 10 pages", why: "A tiny chapter win.", checklist: ["Grab your current book", "Set a 15-min timer", "Jot one line you liked"] },
+  { category: "Hobby Maxxing", title: "Try one emulator tweak", why: "Tinkering is play.", checklist: ["Pick a game or setting", "Change one thing (shader, upscale)", "Note if it looks better"] },
+  { category: "Hobby Maxxing", title: "Cozy game session", why: "Rest counts too.", checklist: ["Pick a cozy game", "Set a 30-min timer", "Finish one in-game task"] },
+  { category: "Hobby Maxxing", title: "COD warm-up", why: "Skill practice, short and sweet.", checklist: ["Play one warm-up match", "Focus on one skill (aim, movement)", "Note one thing to improve"] },
+];
+STARTER.push(...HOBBY);
 type LogEntry = { id: string; savedAt: string; date: string; note: string; blocks: Block[] };
 const WEEK = 7 * 24 * 60 * 60 * 1000;
 
@@ -72,6 +79,7 @@ function Desk() {
   const [notebook, setNotebook] = useStored<{ id: string; text: string; date: string }[]>("abd.notebook", []);
   const [plan, setPlan] = useStored<{ date: string; note: string; blocks: Block[] }>("abd.plan", { date: "", note: "", blocks: [] });
   const [topics, setTopics] = useStored<Topic[]>("abd.topics", STARTER);
+  useEffect(() => { setTopics((t) => t.some((x) => x.category === "Hobby Maxxing") ? t : [...t, ...HOBBY]); }, [topics.length, setTopics]);
   const [log, setLog] = useStored<LogEntry[]>("abd.log", []);
   const [openLog, setOpenLog] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
