@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Check, Loader2, LifeBuoy, Sparkles, Plus, Trash2, BookOpen, Wand2, Clock, History } from "lucide-react";
+import { Check, Loader2, LifeBuoy, Sparkles, Plus, Trash2, BookOpen, Wand2, Clock, History, ChevronDown } from "lucide-react";
 import { askDesk } from "@/lib/desk.functions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -81,6 +81,7 @@ function Desk() {
   const [topics, setTopics] = useStored<Topic[]>("abd.topics", STARTER);
   useEffect(() => { setTopics((t) => t.some((x) => x.category === "Hobby Maxxing") ? t : [...t, ...HOBBY]); }, [topics.length, setTopics]);
   const [log, setLog] = useStored<LogEntry[]>("abd.log", []);
+  const [openCats, setOpenCats] = useState<string[]>([]);
   const [openLog, setOpenLog] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
   useEffect(() => { setLog((l) => { const k = l.filter((e) => Date.now() - new Date(e.savedAt).getTime() < WEEK); return k.length === l.length ? l : k; }); }, [log.length, setLog]);
@@ -148,6 +149,7 @@ function Desk() {
 
   const grouped = CATS.map((c) => ({ ...c, items: topics.filter((t) => t.category === c.name) })).filter((g) => g.items.length);
   const other = topics.filter((t) => !CATS.some((c) => c.name === t.category));
+  const groups = [...grouped, ...(other.length ? [{ name: "Other", color: "muted-foreground", items: other }] : [])];
 
   return (
     <div className="min-h-screen bg-background font-sans text-foreground">
@@ -246,12 +248,15 @@ function Desk() {
           </button>
 
           <section className="rounded-3xl border bg-card p-5">
-            <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-bold"><Sparkles className="h-5 w-5 text-primary" />Suggested micro-topics</h2>
-            <div className="space-y-5">
-              {[...grouped, ...(other.length ? [{ name: "Other", color: "muted-foreground", items: other }] : [])].map((g) => (
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h2 className="flex items-center gap-2 font-display text-lg font-bold"><Sparkles className="h-5 w-5 text-primary" />Suggested micro-topics</h2>
+              <button onClick={() => setOpenCats(openCats.length >= groups.length ? [] : groups.map((g) => g.name))} className="text-xs font-semibold text-primary hover:underline">{openCats.length >= groups.length ? "Hide all" : "Show all"}</button>
+            </div>
+            <div className="space-y-3">
+              {groups.map((g) => { const open = openCats.includes(g.name); return (
                 <div key={g.name}>
-                  <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground"><span className={cn("h-2.5 w-2.5 rounded-full", bg[g.color])} />{g.name}</p>
-                  <div className="space-y-2">
+                  <button onClick={() => setOpenCats((s) => open ? s.filter((x) => x !== g.name) : [...s, g.name])} aria-expanded={open} className="flex w-full items-center gap-2 rounded-lg py-1 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground"><span className={cn("h-2.5 w-2.5 rounded-full", bg[g.color])} />{g.name}<span className="font-normal normal-case">({g.items.length})</span><ChevronDown className={cn("ml-auto h-4 w-4 transition", open && "rotate-180")} /></button>
+                  {open && <div className="mt-2 space-y-2">
                     {g.items.map((t, i) => (
                       <div key={i} className="rounded-2xl border bg-background p-3">
                         <div className="flex items-start justify-between gap-2">
@@ -261,9 +266,9 @@ function Desk() {
                         <ul className="mt-2 list-inside list-disc text-xs text-muted-foreground">{t.checklist.map((x, j) => <li key={j}>{x}</li>)}</ul>
                       </div>
                     ))}
-                  </div>
+                  </div>}
                 </div>
-              ))}
+              ); })}
             </div>
           </section>
 
