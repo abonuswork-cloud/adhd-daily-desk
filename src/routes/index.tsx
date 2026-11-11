@@ -113,7 +113,7 @@ function Affirmation() {
   useEffect(() => {
     const d = new Date();
     const n = Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 86400000);
-    setText(AFFIRMATIONS[n % AFFIRMATIONS.length]);
+    setText(AFFIRMATIONS[n % AFFIRMATIONS.length] ?? null);
   }, []);
   return (
     <section className="paper">
