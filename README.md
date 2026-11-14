@@ -1,28 +1,52 @@
 # AB ADHD Daily Desk
 
-i'm a fan of checklists and the dopamine hit when I'm able to accomplish. can it be a combination of the three concepts that feature dynamic checklists/suggested checklists per prompt/task? so a section for suggested topics related to job search, starting a new company, etc. can be organized by category/interest. some topics to include as well - breaking into sports tech, technology in general, learning claude, etc. I need to micro topic, get suggested topics, and have a section for a task list generator for the day. the idea is I log into this page as my home page every morning and have it generate a manageable task list for my at my desk tasks (generally 4 hours, split into time blocks that are suggested).
+A personal morning homepage designed for ADHD brains: pick your focus areas, type (or speak) what's on your mind, and get a manageable, time-blocked plan for your desk session — with checklists built for that dopamine hit when you check things off.
 
-start building this project, call it "AB ADHD Daily Desk". feature the tasks list section that can be actively checked off, the categories that I can select, a prompt section that stays within my "notebook" - this project, so the more I feed it, the more it learns what I'm looking for. clean, organized, but bright colors to highlight, and organized by category. the i'm stuck button will be helpful.
+**Live app:** https://adhd-daily-desk.lovable.app
 
-This project was built with [Lovable](https://lovable.dev).
+![AB ADHD Daily Desk](docs/screenshots/desk-overview.png)
 
-**Live app**: https://adhd-daily-desk.lovable.app
+## What it does
 
-## Build with Lovable
+- **Focus categories** — eight selectable focus areas (Job Search, Starting a Company, Sports Tech, Technology, Learning Claude, Health & Movement, Creative, Hobby Maxxing), each with its own color that carries through the whole desk.
+- **4-hour plan generator** — turns your focus picks and a free-text prompt into a realistic desk plan split into minute-based time blocks, with checkable tasks.
+- **Suggested micro-topics** — AI-suggested bite-sized topics per category, each with its own mini checklist. Add them to today's list with one tap, or mark them "Not for me" so future suggestions learn what serves you.
+- **"I'm stuck" button** — one tap gets you a gentle nudge and a tiny next-step list when motivation stalls.
+- **Speech-to-text prompt** — talk instead of type using the browser's built-in voice input.
+- **My notebook** — everything you feed the desk is remembered locally, so suggestions get more "you" over time.
+- **This week & Log** — a weekly overview of checked-off tasks and a 7-day log of past desk lists.
+- **Daily affirmation, date header, live clock** — notebook-style touches that refresh every day.
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/b37c7ef7-127a-46e4-880f-02f9193635ea).
+All data lives in your browser (localStorage) — no account, no sign-in, nothing leaves your device except the AI prompt.
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+## Design
 
-## Development
+A light grayscale ruled-notebook aesthetic — paper sheets, red margin lines, ink strike-throughs on completed tasks — with pastel, tritanomaly-friendly category highlighters. Typography: Newsreader (serif) + Courier Prime (monospace).
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+![Notebook theme detail](docs/screenshots/desk-top.png)
+
+## Tech stack
+
+- **React 19 + TypeScript** on **TanStack Start** (SSR, file-based routing, server functions)
+- **Vite 7** build tooling
+- **Tailwind CSS v4** with custom design tokens and utilities
+- **shadcn/ui** components + **lucide-react** icons
+- **Google Gemini** (via AI gateway) for plan generation, topic suggestions, and stuck-nudges
+- **Web Speech API** for speech-to-text
+- **Vitest** for unit tests
+- Built and deployed with [Lovable](https://lovable.dev)
+
+## Run locally
 
 ```sh
 git clone <this-repository-url>
 cd <repository-name>
 npm i
 npm run dev
+```
+
+## Tests
+
+```sh
+npx vitest run
 ```
