@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Check, Loader2, LifeBuoy, Sparkles, Plus, Trash2, BookOpen, Wand2, Clock, History, ChevronDown, X, Mic, MicOff } from "lucide-react";
 import { askDesk } from "@/lib/desk.functions";
 import { CATS, colorOf, deskCategory } from "@/lib/desk-categories";
+import { dailyTaskCounts } from "@/lib/desk-week";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -241,9 +242,8 @@ function Desk() {
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(start); d.setDate(start.getDate() + i);
       const key = dayKey(d);
-      const sources = [...log.filter((e) => e.date === key), ...(plan.date === key ? [plan] : [])];
-      const ts = sources.flatMap((x) => x.blocks.flatMap((b) => b.tasks));
-      return { key, label: d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 2), done: ts.filter((t) => t.done).length, total: ts.length, isToday: key === today() };
+      const counts = dailyTaskCounts(key, today(), plan, log);
+      return { key, label: d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 2), ...counts, isToday: key === today() };
     });
   }, [log, plan]);
   const grouped = CATS.map((c) => ({ ...c, items: topics.filter((t) => t.category === c.name) })).filter((g) => g.items.length);
